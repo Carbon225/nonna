@@ -3,7 +3,7 @@ add_executable(motors
     ${CMAKE_CURRENT_LIST_DIR}/motors.c
 )
 
-target_link_libraries(motors
+target_link_libraries(motors PRIVATE
     pico_stdlib
     hardware_watchdog
     hardware_pwm

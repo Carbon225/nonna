@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package nonna_proto;
+
+message MotorCmd {
+    sint32 left = 1;
+    sint32 right = 2;
+    bool idle = 3;
+}
+
+message SensorData {
+    repeated uint32 sensors = 1;
+}
+
+message NonnaMsg {
+    oneof payload {
+        MotorCmd motor_cmd = 1;
+        SensorData sensor_data = 2;
+    }
+}
