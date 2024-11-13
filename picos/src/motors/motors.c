@@ -4,9 +4,10 @@
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
 
+// 62.5 kHz PWM
 #define PWM_TOP (999)
 #define MAX_POWER_LEVEL (1000)
-#define CLK_DIV (3.125f)
+#define CLK_DIV (2.0f)
 
 #define L_SLICE (2)
 #define L_PWM_PIN (5)
