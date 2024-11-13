@@ -10,6 +10,11 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "pb_encode.h"
+#include "proto_framing.h"
+#include "nonna.pb.h"
+
+#include "nonna.h"
 #include "nonna_esp/wifi_man.h"
 #include "nonna_esp/ota.h"
 #include "nonna_esp/http_params.h"
@@ -18,8 +23,19 @@ static const char TAG[] = "main";
 
 static SemaphoreHandle_t g_core1_init_done;
 
+void nonna_enable(void)
+{
+    ESP_LOGW(TAG, "Nonna enabled");
+}
+
+void nonna_disable(void)
+{
+    ESP_LOGW(TAG, "Nonna disabled");
+}
+
 static void core1_main(void *pv)
 {
+    xSemaphoreGive(g_core1_init_done);
     vTaskDelete(NULL);
 }
 
