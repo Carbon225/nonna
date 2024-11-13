@@ -3,6 +3,8 @@
 
 void motors_init(void);
 
-void motors_set(int left, int right);
+void motors_set_speed(int left, int right);
+
+void motors_set_idle(void);
 
 #endif

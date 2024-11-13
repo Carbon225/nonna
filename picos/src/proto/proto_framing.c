@@ -2,8 +2,6 @@
 
 #include <string.h>
 
-static const uint8_t FRAME_START = 0x7E;
-
 static uint8_t calc_crc8(const uint8_t *data, size_t len)
 {
     uint8_t crc = 0x00;
@@ -28,6 +26,11 @@ int frame_bytes(const uint8_t *data, size_t len, uint8_t *out, size_t out_len)
         return 0;
     }
 
+    if (len > MAX_PAYLOAD_LEN)
+    {
+        return -1;
+    }
+
     // Frame start, length, data, crc
     if (1 + 1 + len + 1 > out_len)
     {
@@ -42,9 +45,14 @@ int frame_bytes(const uint8_t *data, size_t len, uint8_t *out, size_t out_len)
     return len + 3;
 }
 
-const uint8_t* unframe_bytes(const uint8_t *data, size_t len, size_t *out_len)
+const uint8_t* unframe_bytes(const uint8_t *data, size_t len)
 {
     if (len < 4)
+    {
+        return NULL;
+    }
+
+    if (len > MAX_PACKET_LEN)
     {
         return NULL;
     }
@@ -68,6 +76,5 @@ const uint8_t* unframe_bytes(const uint8_t *data, size_t len, size_t *out_len)
         return NULL;
     }
 
-    *out_len = payload_len;
     return payload;
 }

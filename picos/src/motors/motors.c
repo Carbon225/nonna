@@ -56,6 +56,7 @@ static void set_motor_pwm(uint slice, uint pwm_chan, uint a_pin, uint b_pin, int
     }
     else
     {
+        // short brake
         pwm_set_chan_level(slice, pwm_chan, 0);
         gpio_put(a_pin, 1);
         gpio_put(b_pin, 1);
@@ -68,8 +69,18 @@ void motors_init(void)
     configure_motor(R_SLICE, R_PWM_PIN, R_PWM_CHAN, R_A_PIN, R_B_PIN);
 }
 
-void motors_set(int left, int right)
+void motors_set_speed(int left, int right)
 {
     set_motor_pwm(L_SLICE, L_PWM_CHAN, L_A_PIN, L_B_PIN, left);
     set_motor_pwm(R_SLICE, R_PWM_CHAN, R_A_PIN, R_B_PIN, right);
+}
+
+void motors_set_idle(void)
+{
+    pwm_set_chan_level(L_SLICE, L_PWM_CHAN, 0);
+    pwm_set_chan_level(R_SLICE, R_PWM_CHAN, 0);
+    gpio_put(L_A_PIN, 0);
+    gpio_put(L_B_PIN, 0);
+    gpio_put(R_A_PIN, 0);
+    gpio_put(R_B_PIN, 0);
 }

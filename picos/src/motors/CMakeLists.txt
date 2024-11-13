@@ -5,10 +5,16 @@ add_executable(motors
 
 target_link_libraries(motors PRIVATE
     pico_stdlib
+    pico_rand
+
     hardware_watchdog
     hardware_pwm
     hardware_gpio
     hardware_uart
+
+    nonna_proto
+    nanopb_decode
+    proto_framing
 )
 
 pico_enable_stdio_usb(motors 1)
