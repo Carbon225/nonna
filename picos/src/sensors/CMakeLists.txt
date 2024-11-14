@@ -5,9 +5,15 @@ add_executable(sensors
 
 target_link_libraries(sensors PRIVATE
     pico_stdlib
+
     hardware_gpio
     hardware_watchdog
     hardware_uart
+
+    nonna_proto
+    nanopb_encode
+    proto_framing
+    bootsel_button
 )
 
 pico_enable_stdio_usb(sensors 1)

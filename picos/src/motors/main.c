@@ -15,7 +15,7 @@
 
 // #define DEBUG
 
-#define UART_BAUD 921600
+#define UART_BAUD 115200
 
 #define UART_SENSORS uart1
 #define TX_SENSORS_PIN 8
@@ -90,12 +90,6 @@ int main()
     uart_init(UART_SENSORS, UART_BAUD);
 
     motors_init();
-
-#ifndef DEBUG
-    watchdog_disable();
-    sleep_ms(10);
-    watchdog_enable(100, 0);
-#endif
 
     uint8_t recv_buffer[MAX_PACKET_LEN];
     size_t recv_buffer_len = 0;
