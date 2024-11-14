@@ -18,8 +18,8 @@
 #define R_SLICE (1)
 #define R_PWM_PIN (2)
 #define R_PWM_CHAN (PWM_CHAN_A)
-#define R_A_PIN (4)
-#define R_B_PIN (3)
+#define R_A_PIN (3)
+#define R_B_PIN (4)
 
 static void configure_motor(uint slice, uint pwm_pin, uint pwm_chan, uint a_pin, uint b_pin)
 {
