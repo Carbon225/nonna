@@ -84,3 +84,23 @@ void sensors_read(uint32_t *pulse_lengths_us)
         }
     }
 }
+
+void sensors_read_oversampled(uint32_t *pulse_lengths_us, int oversampling)
+{
+    uint32_t pulse_lengths_us_1[APP_NUM_SENSORS];
+    for (int i = 0; i < APP_NUM_SENSORS; i++)
+    {
+        pulse_lengths_us[i] = 0;
+    }
+    for (int s = 0; s < oversampling; s++)
+    {
+        sensors_read(pulse_lengths_us_1);
+        for (int i = 0; i < APP_NUM_SENSORS; i++)
+        {
+            if (pulse_lengths_us_1[i] > pulse_lengths_us[i])
+            {
+                pulse_lengths_us[i] = pulse_lengths_us_1[i];
+            }
+        }
+    }
+}

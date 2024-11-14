@@ -9,4 +9,6 @@ void sensors_init(void);
 
 void sensors_read(uint32_t *pulse_lengths_us);
 
+void sensors_read_oversampled(uint32_t *pulse_lengths_us, int oversampling);
+
 #endif

@@ -49,28 +49,13 @@ int main()
 
     sensors_init();
 
-    uint32_t pulse_lengths_us_1[APP_NUM_SENSORS] = {0};
     uint32_t pulse_lengths_us[APP_NUM_SENSORS] = {0};
 
     bool enabled = false;
 
     for (;;)
     {
-        for (int i = 0; i < APP_NUM_SENSORS; i++)
-        {
-            pulse_lengths_us[i] = 0;
-        }
-        for (int i = 0; i < SENSOR_OVERSAMPLING; i++)
-        {
-            sensors_read(pulse_lengths_us_1);
-            for (int j = 0; j < APP_NUM_SENSORS; j++)
-            {
-                if (pulse_lengths_us_1[j] > pulse_lengths_us[j])
-                {
-                    pulse_lengths_us[j] = pulse_lengths_us_1[j];
-                }
-            }
-        }
+        sensors_read_oversampled(pulse_lengths_us, SENSOR_OVERSAMPLING);
 
 #ifdef DEBUG
         printf("Pulse lengths:\n");
