@@ -12,6 +12,12 @@ PB_BIND(nonna_proto_MotorCmd, nonna_proto_MotorCmd, AUTO)
 PB_BIND(nonna_proto_SensorData, nonna_proto_SensorData, AUTO)
 
 
+PB_BIND(nonna_proto_EnableCmd, nonna_proto_EnableCmd, AUTO)
+
+
+PB_BIND(nonna_proto_DisableCmd, nonna_proto_DisableCmd, AUTO)
+
+
 PB_BIND(nonna_proto_NonnaMsg, nonna_proto_NonnaMsg, AUTO)
 
 

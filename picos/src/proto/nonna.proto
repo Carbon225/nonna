@@ -12,9 +12,15 @@ message SensorData {
     repeated uint32 sensors = 1;
 }
 
+message EnableCmd {}
+
+message DisableCmd {}
+
 message NonnaMsg {
     oneof payload {
         MotorCmd motor_cmd = 1;
         SensorData sensor_data = 2;
+        EnableCmd enable_cmd = 3;
+        DisableCmd disable_cmd = 4;
     }
 }
