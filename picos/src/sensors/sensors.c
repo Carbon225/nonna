@@ -4,8 +4,8 @@
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
 
-#define SENSOR_SETTLE_DELAY_US (10)
-#define SENSOR_TIMEOUT_US (1000)
+#define SENSOR_SETTLE_DELAY_US (150)
+#define SENSOR_TIMEOUT_US (500)
 
 #define LED_ENABLE_PIN (2)
 
@@ -21,7 +21,7 @@ void sensors_init(void)
 {
     gpio_init(LED_ENABLE_PIN);
     gpio_set_dir(LED_ENABLE_PIN, GPIO_OUT);
-    gpio_put(LED_ENABLE_PIN, 0);
+    gpio_put(LED_ENABLE_PIN, 1);
 
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
@@ -35,6 +35,8 @@ void sensors_init(void)
 
 void sensors_read(uint32_t *pulse_lengths_us)
 {
+    gpio_put(LED_ENABLE_PIN, 0);
+
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
         pulse_lengths_us[i] = UINT32_MAX;
@@ -75,6 +77,8 @@ void sensors_read(uint32_t *pulse_lengths_us)
     while (n_readings < APP_NUM_SENSORS && now - read_start_us < SENSOR_TIMEOUT_US);
 
     restore_interrupts(irq_state);
+
+    gpio_put(LED_ENABLE_PIN, 1);
 
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
