@@ -2,6 +2,7 @@
 
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
+#include "hardware/sync.h"
 
 #define SENSOR_SETTLE_DELAY_US (10)
 #define SENSOR_TIMEOUT_US (1000)
@@ -20,8 +21,7 @@ void sensors_init(void)
 {
     gpio_init(LED_ENABLE_PIN);
     gpio_set_dir(LED_ENABLE_PIN, GPIO_OUT);
-    gpio_put(LED_ENABLE_PIN, 1);
-    gpio_disable_pulls(LED_ENABLE_PIN);
+    gpio_put(LED_ENABLE_PIN, 0);
 
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
@@ -35,15 +35,15 @@ void sensors_init(void)
 
 void sensors_read(uint32_t *pulse_lengths_us)
 {
-    gpio_put(LED_ENABLE_PIN, 0);
-
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
         pulse_lengths_us[i] = UINT32_MAX;
     }
 
     gpio_set_dir_out_masked(SENSOR_GPIO_MASK);
-    sleep_us(SENSOR_SETTLE_DELAY_US);
+    busy_wait_us(SENSOR_SETTLE_DELAY_US);
+
+    uint32_t irq_state = save_and_disable_interrupts();
 
     int n_readings = 0;
     uint32_t now;
@@ -74,7 +74,7 @@ void sensors_read(uint32_t *pulse_lengths_us)
     }
     while (n_readings < APP_NUM_SENSORS && now - read_start_us < SENSOR_TIMEOUT_US);
 
-    gpio_put(LED_ENABLE_PIN, 1);
+    restore_interrupts(irq_state);
 
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {

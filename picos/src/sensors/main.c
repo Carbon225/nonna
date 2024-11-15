@@ -8,14 +8,18 @@
 #include "pb_encode.h"
 #include "proto_framing.h"
 #include "nonna.pb.h"
-#include "bootsel_button.h"
 
 #include "sensors.h"
 
 // #define DEBUG
 
-#define SENSOR_OVERSAMPLING 3
-#define SENSOR_THRESHOLD 400
+#define SENSOR_OVERSAMPLING 1
+#define SENSOR_THRESHOLD 100
+
+#define AUTOMATIC_ARMING 0
+#define AUTOMATIC_ARMING_DELAY_US 3000000
+
+#define AUTOMATIC_DISARMING 0
 
 #define UART_BAUD 115200
 
@@ -49,13 +53,20 @@ int main()
 
     sensors_init();
 
-    uint32_t pulse_lengths_us[APP_NUM_SENSORS] = {0};
-
+    uint32_t pulse_lengths_us[APP_NUM_SENSORS];
     bool enabled = false;
+
+#if AUTOMATIC_ARMING
+    uint32_t first_time_line_detected_us = 0;
+#endif
 
     for (;;)
     {
-        sensors_read_oversampled(pulse_lengths_us, SENSOR_OVERSAMPLING);
+#if SENSOR_OVERSAMPLING > 1
+        // sensors_read_oversampled(pulse_lengths_us, SENSOR_OVERSAMPLING);
+#else
+        sensors_read(pulse_lengths_us);
+#endif
 
 #ifdef DEBUG
         printf("Pulse lengths:\n");
@@ -67,16 +78,66 @@ int main()
         sleep_ms(100);
 #endif
 
-        if (bootsel_button_get())
+#if AUTOMATIC_DISARMING
+        if (enabled)
         {
-            enabled = !enabled;
-            for (int i = 0; i < 100; i++)
+            bool all_sensors_infinite = true;
+            for (int i = 0; i < APP_NUM_SENSORS; i++)
             {
-                sleep_ms(10);
-                watchdog_update();
+                if (pulse_lengths_us[i] < SENSOR_THRESHOLD)
+                {
+                    all_sensors_infinite = false;
+                    break;
+                }
             }
-            printf("Enabled: %d\n", enabled);
+            if (all_sensors_infinite)
+            {
+                printf("Automatic disarming\n");
+                enabled = false;
+            }
         }
+#endif
+
+#if AUTOMATIC_ARMING
+        if (!enabled)
+        {
+            bool edge_sensors_white =
+                pulse_lengths_us[0] < SENSOR_THRESHOLD &&
+                pulse_lengths_us[7] < SENSOR_THRESHOLD &&
+                pulse_lengths_us[8] < SENSOR_THRESHOLD &&
+                pulse_lengths_us[15] < SENSOR_THRESHOLD &&
+                pulse_lengths_us[16] < SENSOR_THRESHOLD &&
+                pulse_lengths_us[23] < SENSOR_THRESHOLD;
+            bool middle_sensors_black = false;
+            for (int row = 0; row < 3; row++)
+            {
+                for (int col = 1; col < 7; col++)
+                {
+                    if (pulse_lengths_us[row * 8 + col] > SENSOR_THRESHOLD)
+                    {
+                        middle_sensors_black = true;
+                        break;
+                    }
+                }
+            }
+            if (edge_sensors_white && middle_sensors_black)
+            {
+                if (first_time_line_detected_us == 0)
+                {
+                    first_time_line_detected_us = time_us_32();
+                }
+                else if (time_us_32() - first_time_line_detected_us > AUTOMATIC_ARMING_DELAY_US)
+                {
+                    printf("Automatic arming\n");
+                    enabled = true;
+                }
+            }
+            else
+            {
+                first_time_line_detected_us = 0;
+            }
+        }
+#endif
 
         nonna_proto_NonnaMsg msg = {0};
         msg.which_payload = nonna_proto_NonnaMsg_motor_cmd_tag;
