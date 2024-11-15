@@ -1,6 +1,8 @@
 add_executable(sensors
     ${CMAKE_CURRENT_LIST_DIR}/main.c
     ${CMAKE_CURRENT_LIST_DIR}/sensors.c
+    ${CMAKE_CURRENT_LIST_DIR}/control_loop.c
+    ${CMAKE_CURRENT_LIST_DIR}/turn_pid.c
 )
 
 target_link_libraries(sensors PRIVATE
@@ -9,11 +11,11 @@ target_link_libraries(sensors PRIVATE
     hardware_gpio
     hardware_watchdog
     hardware_uart
+    hardware_sync
 
     nonna_proto
     nanopb_encode
     proto_framing
-    bootsel_button
 )
 
 pico_enable_stdio_usb(sensors 1)

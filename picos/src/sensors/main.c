@@ -10,11 +10,11 @@
 #include "nonna.pb.h"
 
 #include "sensors.h"
+#include "control_loop.h"
 
 // #define DEBUG
 
 #define SENSOR_OVERSAMPLING 1
-#define SENSOR_THRESHOLD 400
 
 #define AUTOMATIC_ARMING 1
 #define AUTOMATIC_ARMING_DELAY_US 3000000
@@ -52,6 +52,7 @@ int main()
     uart_init(UART_MOTORS, UART_BAUD);
 
     sensors_init();
+    control_loop_init();
 
     uint32_t pulse_lengths_us[APP_NUM_SENSORS];
     bool enabled = false;
@@ -84,7 +85,7 @@ int main()
             bool all_sensors_infinite = true;
             for (int i = 0; i < APP_NUM_SENSORS; i++)
             {
-                if (pulse_lengths_us[i] < SENSOR_THRESHOLD)
+                if (pulse_lengths_us[i] < SENSOR_BLACK_THRESHOLD)
                 {
                     all_sensors_infinite = false;
                     break;
@@ -102,18 +103,18 @@ int main()
         if (!enabled)
         {
             bool edge_sensors_white =
-                pulse_lengths_us[0] < SENSOR_THRESHOLD &&
-                pulse_lengths_us[7] < SENSOR_THRESHOLD &&
-                pulse_lengths_us[8] < SENSOR_THRESHOLD &&
-                pulse_lengths_us[15] < SENSOR_THRESHOLD &&
-                pulse_lengths_us[16] < SENSOR_THRESHOLD &&
-                pulse_lengths_us[23] < SENSOR_THRESHOLD;
+                pulse_lengths_us[0] < SENSOR_BLACK_THRESHOLD &&
+                pulse_lengths_us[7] < SENSOR_BLACK_THRESHOLD &&
+                pulse_lengths_us[8] < SENSOR_BLACK_THRESHOLD &&
+                pulse_lengths_us[15] < SENSOR_BLACK_THRESHOLD &&
+                pulse_lengths_us[16] < SENSOR_BLACK_THRESHOLD &&
+                pulse_lengths_us[23] < SENSOR_BLACK_THRESHOLD;
             bool middle_sensors_black = false;
             for (int row = 0; row < 3; row++)
             {
                 for (int col = 1; col < 7; col++)
                 {
-                    if (pulse_lengths_us[row * 8 + col] > SENSOR_THRESHOLD)
+                    if (pulse_lengths_us[row * 8 + col] > SENSOR_BLACK_THRESHOLD)
                     {
                         middle_sensors_black = true;
                         break;
@@ -141,9 +142,9 @@ int main()
 
         nonna_proto_NonnaMsg msg = {0};
         msg.which_payload = nonna_proto_NonnaMsg_motor_cmd_tag;
-        msg.payload.motor_cmd.left = enabled ? 300 : 0;
-        msg.payload.motor_cmd.right = enabled ? 300 : 0;
         msg.payload.motor_cmd.idle = !enabled;
+
+        control_loop_decide_motors(pulse_lengths_us, &msg.payload.motor_cmd.left, &msg.payload.motor_cmd.right);
 
         uint8_t payload_buf[MAX_PAYLOAD_LEN];
         pb_ostream_t pb_ostream = pb_ostream_from_buffer(payload_buf, MAX_PAYLOAD_LEN);
