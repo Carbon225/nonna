@@ -7,6 +7,8 @@ add_executable(sensors
 
 target_link_libraries(sensors PRIVATE
     pico_stdlib
+    pico_multicore
+    pico_rand
 
     hardware_gpio
     hardware_watchdog
@@ -15,6 +17,7 @@ target_link_libraries(sensors PRIVATE
 
     nonna_proto
     nanopb_encode
+    nanopb_decode
     proto_framing
 )
 

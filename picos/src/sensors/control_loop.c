@@ -56,7 +56,7 @@ void control_loop_init(void)
 void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_out, int32_t *right_speed_out)
 {
     static uint32_t line_position = 0;
-    static float forward_speed = 0.2f;
+    static float forward_speed = 0.35f;
 
     float left_speed;
     float right_speed;
