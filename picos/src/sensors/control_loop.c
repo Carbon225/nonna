@@ -56,7 +56,7 @@ void control_loop_init(void)
 void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_out, int32_t *right_speed_out)
 {
     static uint32_t line_position = 0;
-    static float forward_speed = 0.3f;
+    static float forward_speed = 0.35f;
 
     float left_speed;
     float right_speed;
@@ -78,8 +78,8 @@ void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_
         }
         else
         {
-            left_speed = 0;
-            right_speed = -output;
+            left_speed = 0.1f;
+            right_speed = -1.0f;
         }
     }
     else
@@ -91,8 +91,8 @@ void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_
         }
         else
         {
-            left_speed = output;
-            right_speed = 0;
+            left_speed = -1.0f;
+            right_speed = 0.1f;
         }
     }
 
