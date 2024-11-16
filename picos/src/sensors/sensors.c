@@ -24,7 +24,7 @@ static const uint SENSOR_PINS[APP_NUM_SENSORS] = {
 static uint32_t SENSOR_GPIO_MASK = 0;
 
 static uint32_t calibration_min_values[APP_NUM_SENSORS] = {0};
-static uint32_t calibration_max_values[APP_NUM_SENSORS] = {SENSOR_TIMEOUT_US};
+static uint32_t calibration_max_values[APP_NUM_SENSORS] = {0};
 
 void sensors_init(void)
 {
@@ -34,6 +34,8 @@ void sensors_init(void)
 
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
+        calibration_max_values[i] = SENSOR_TIMEOUT_US;
+
         gpio_init(SENSOR_PINS[i]);
         gpio_set_dir(SENSOR_PINS[i], GPIO_OUT);
         gpio_put(SENSOR_PINS[i], 1);
@@ -145,12 +147,12 @@ void sensors_calibrate(void)
     }
 }
 
-void sensors_apply_calibration(uint32_t *pulse_lengths_us)
+void sensors_apply_calibration(uint32_t *values_in, uint32_t *values_out)
 {
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
-        if (pulse_lengths_us[i] <= calibration_min_values[i]) pulse_lengths_us[i] = 0;
-        else if (pulse_lengths_us[i] >= calibration_max_values[i]) pulse_lengths_us[i] = 1024;
-        else pulse_lengths_us[i] = ((pulse_lengths_us[i] - calibration_min_values[i]) << 10) / (calibration_max_values[i] - calibration_min_values[i]);
+        if (values_in[i] <= calibration_min_values[i]) values_out[i] = 0;
+        else if (values_in[i] >= calibration_max_values[i]) values_out[i] = 1024;
+        else values_out[i] = ((values_in[i] - calibration_min_values[i]) << 10) / (calibration_max_values[i] - calibration_min_values[i]);
     }
 }

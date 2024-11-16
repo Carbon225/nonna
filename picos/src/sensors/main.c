@@ -61,7 +61,8 @@ int main()
     control_loop_init();
 #endif
 
-    uint32_t pulse_lengths_us[APP_NUM_SENSORS];
+    uint32_t pulse_lengths_us_raw[APP_NUM_SENSORS];
+    uint32_t pulse_lengths_us_calib[APP_NUM_SENSORS];
     bool enabled = false;
 
 #if AUTOMATIC_ARMING
@@ -73,14 +74,16 @@ int main()
 #if SENSOR_OVERSAMPLING > 1
         sensors_read_oversampled(pulse_lengths_us, SENSOR_OVERSAMPLING);
 #else
-        sensors_read(pulse_lengths_us);
+        sensors_read(pulse_lengths_us_raw);
 #endif
+
+        sensors_apply_calibration(pulse_lengths_us_raw, pulse_lengths_us_calib);
 
 #ifdef DEBUG
         printf("Pulse lengths:\n");
         for (int i = 0; i < APP_NUM_SENSORS; i++)
         {
-            printf(" %d: %lu us\t%d\n", i, pulse_lengths_us[i], pulse_lengths_us[i] > SENSOR_BLACK_THRESHOLD_RAW);
+            printf(" %d: %lu us\t%lu\n", i, pulse_lengths_us_raw[i], pulse_lengths_us_calib[i]);
         }
         printf("\n");
         sleep_ms(100);
@@ -92,7 +95,7 @@ int main()
             bool all_sensors_infinite = true;
             for (int i = 0; i < APP_NUM_SENSORS; i++)
             {
-                if (pulse_lengths_us[i] < SENSOR_BLACK_THRESHOLD_RAW)
+                if (pulse_lengths_us_raw[i] < SENSOR_BLACK_THRESHOLD_RAW)
                 {
                     all_sensors_infinite = false;
                     break;
@@ -110,18 +113,18 @@ int main()
         if (!enabled)
         {
             bool edge_sensors_white =
-                pulse_lengths_us[0] < SENSOR_BLACK_THRESHOLD_RAW &&
-                pulse_lengths_us[7] < SENSOR_BLACK_THRESHOLD_RAW &&
-                pulse_lengths_us[8] < SENSOR_BLACK_THRESHOLD_RAW &&
-                pulse_lengths_us[15] < SENSOR_BLACK_THRESHOLD_RAW &&
-                pulse_lengths_us[16] < SENSOR_BLACK_THRESHOLD_RAW &&
-                pulse_lengths_us[23] < SENSOR_BLACK_THRESHOLD_RAW;
+                pulse_lengths_us_raw[0] < SENSOR_BLACK_THRESHOLD_RAW &&
+                pulse_lengths_us_raw[7] < SENSOR_BLACK_THRESHOLD_RAW &&
+                pulse_lengths_us_raw[8] < SENSOR_BLACK_THRESHOLD_RAW &&
+                pulse_lengths_us_raw[15] < SENSOR_BLACK_THRESHOLD_RAW &&
+                pulse_lengths_us_raw[16] < SENSOR_BLACK_THRESHOLD_RAW &&
+                pulse_lengths_us_raw[23] < SENSOR_BLACK_THRESHOLD_RAW;
             bool middle_sensors_black = false;
             for (int row = 0; row < 3; row++)
             {
                 for (int col = 1; col < 7; col++)
                 {
-                    if (pulse_lengths_us[row * 8 + col] > SENSOR_BLACK_THRESHOLD_RAW)
+                    if (pulse_lengths_us_raw[row * 8 + col] > SENSOR_BLACK_THRESHOLD_RAW)
                     {
                         middle_sensors_black = true;
                         break;
@@ -154,9 +157,9 @@ int main()
         msg.payload.motor_cmd.idle = !enabled;
 
 #if USE_NN
-        brain_decide_motors(pulse_lengths_us, &msg.payload.motor_cmd.left, &msg.payload.motor_cmd.right);
+        brain_decide_motors(pulse_lengths_us_calib, &msg.payload.motor_cmd.left, &msg.payload.motor_cmd.right);
 #else
-        control_loop_decide_motors(pulse_lengths_us, &msg.payload.motor_cmd.left, &msg.payload.motor_cmd.right);
+        control_loop_decide_motors(pulse_lengths_us_calib, &msg.payload.motor_cmd.left, &msg.payload.motor_cmd.right);
 #endif
 
         uint8_t payload_buf[MAX_PAYLOAD_LEN];

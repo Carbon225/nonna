@@ -23,7 +23,7 @@ void brain_decide_motors(uint32_t *sensors, int32_t *motor_left, int32_t *motor_
     // convert to floats
     for (int i = 0; i < APP_NUM_SENSORS; i++)
     {
-        inputs[i] = sensors[i] > SENSOR_BLACK_THRESHOLD_RAW ? 1.0f : 0.0f;
+        inputs[i] = sensors[i] > SENSOR_BLACK_THRESHOLD_CALIBRATED ? 1.0f : 0.0f;
     }
 
     // compute
