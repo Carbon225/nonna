@@ -1,11 +1,17 @@
 #include "sensors.h"
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
+#include "hardware/watchdog.h"
 
 #define SENSOR_SETTLE_DELAY_US (150)
 #define SENSOR_TIMEOUT_US (500)
+
+#define CALIBRATION_SAMPLES (1000)
 
 #define LED_ENABLE_PIN (2)
 
@@ -16,6 +22,9 @@ static const uint SENSOR_PINS[APP_NUM_SENSORS] = {
 };
 
 static uint32_t SENSOR_GPIO_MASK = 0;
+
+static uint32_t calibration_min_values[APP_NUM_SENSORS] = {0};
+static uint32_t calibration_max_values[APP_NUM_SENSORS] = {SENSOR_TIMEOUT_US};
 
 void sensors_init(void)
 {
@@ -106,5 +115,42 @@ void sensors_read_oversampled(uint32_t *pulse_lengths_us, int oversampling)
                 pulse_lengths_us[i] = pulse_lengths_us_1[i];
             }
         }
+    }
+}
+
+static int compare(const void *a, const void *b)
+{
+    uint32_t int_a = *((uint32_t*)a);
+    uint32_t int_b = *((uint32_t*)b);
+    if (int_a == int_b) return 0;
+    else if (int_a < int_b) return -1;
+    else return 1;
+}
+
+void sensors_calibrate(void)
+{
+    static uint32_t calibration_buffer[CALIBRATION_SAMPLES * APP_NUM_SENSORS];
+    for (int i = 0; i < CALIBRATION_SAMPLES; i++)
+    {
+        sensors_read(calibration_buffer + i * APP_NUM_SENSORS);
+        watchdog_update();
+    }
+    qsort(calibration_buffer, CALIBRATION_SAMPLES * APP_NUM_SENSORS, sizeof(uint32_t), compare);
+    int qmin = CALIBRATION_SAMPLES * APP_NUM_SENSORS / 10;
+    int qmax = CALIBRATION_SAMPLES * APP_NUM_SENSORS - qmin;
+    for (int i = 0; i < APP_NUM_SENSORS; i++)
+    {
+        calibration_min_values[i] = calibration_buffer[qmin];
+        calibration_max_values[i] = calibration_buffer[qmax];
+    }
+}
+
+void sensors_apply_calibration(uint32_t *pulse_lengths_us)
+{
+    for (int i = 0; i < APP_NUM_SENSORS; i++)
+    {
+        if (pulse_lengths_us[i] <= calibration_min_values[i]) pulse_lengths_us[i] = 0;
+        else if (pulse_lengths_us[i] >= calibration_max_values[i]) pulse_lengths_us[i] = 1024;
+        else pulse_lengths_us[i] = ((pulse_lengths_us[i] - calibration_min_values[i]) << 10) / (calibration_max_values[i] - calibration_min_values[i]);
     }
 }

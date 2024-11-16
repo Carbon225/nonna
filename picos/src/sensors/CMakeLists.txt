@@ -3,6 +3,8 @@ add_executable(sensors
     ${CMAKE_CURRENT_LIST_DIR}/sensors.c
     ${CMAKE_CURRENT_LIST_DIR}/control_loop.c
     ${CMAKE_CURRENT_LIST_DIR}/turn_pid.c
+    ${CMAKE_CURRENT_LIST_DIR}/brain.c
+    ${CMAKE_CURRENT_LIST_DIR}/neural_network.c
 )
 
 target_link_libraries(sensors PRIVATE

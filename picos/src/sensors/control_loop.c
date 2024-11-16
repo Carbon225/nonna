@@ -18,12 +18,12 @@ static void update_line_position(uint32_t *position, const uint32_t values[])
     {
         uint32_t v = values[i];
 
-        if (v > SENSOR_BLACK_THRESHOLD)
+        if (v > SENSOR_BLACK_THRESHOLD_RAW)
         {
             onLine = true;
         }
 
-        if (v > SENSOR_NOISE_THRESHOLD)
+        if (v > SENSOR_NOISE_THRESHOLD_RAW)
         {
             avg += i * v << 10;
             sum += v;
