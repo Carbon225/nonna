@@ -12,14 +12,14 @@
 #define L_SLICE (2)
 #define L_PWM_PIN (5)
 #define L_PWM_CHAN (PWM_CHAN_B)
-#define L_A_PIN (6)
-#define L_B_PIN (7)
+#define L_A_PIN (7)
+#define L_B_PIN (6)
 
 #define R_SLICE (1)
 #define R_PWM_PIN (2)
 #define R_PWM_CHAN (PWM_CHAN_A)
-#define R_A_PIN (4)
-#define R_B_PIN (3)
+#define R_A_PIN (3)
+#define R_B_PIN (4)
 
 static void configure_motor(uint slice, uint pwm_pin, uint pwm_chan, uint a_pin, uint b_pin)
 {
@@ -78,8 +78,8 @@ void motors_set_speed(int left, int right)
 
 void motors_set_idle(void)
 {
-    pwm_set_chan_level(L_SLICE, L_PWM_CHAN, 0);
-    pwm_set_chan_level(R_SLICE, R_PWM_CHAN, 0);
+    pwm_set_chan_level(L_SLICE, L_PWM_CHAN, MAX_POWER_LEVEL);
+    pwm_set_chan_level(R_SLICE, R_PWM_CHAN, MAX_POWER_LEVEL);
     gpio_put(L_A_PIN, 0);
     gpio_put(L_B_PIN, 0);
     gpio_put(R_A_PIN, 0);

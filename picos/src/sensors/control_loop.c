@@ -8,6 +8,18 @@
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 #define MOTOR_MAX_SPEED 1000
 
+static void extract_sensor_row(uint32_t *values, uint32_t *row)
+{
+    row[7] = values[23];
+    row[6] = values[14];
+    row[5] = values[13];
+    row[4] = values[12];
+    row[3] = values[11];
+    row[2] = values[10];
+    row[1] = values[9];
+    row[0] = values[16];
+}
+
 static void update_line_position(uint32_t *position, const uint32_t values[])
 {
     uint32_t avg = 0;
@@ -55,13 +67,21 @@ void control_loop_init(void)
 
 void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_out, int32_t *right_speed_out)
 {
+    static const float forward_speed = 0.20f;
+    static const float sharp_turn_speed = 2.0f * forward_speed;
+
     static uint32_t line_position = 0;
-    static float forward_speed = 0.35f;
 
     float left_speed;
     float right_speed;
+    uint32_t sensor_row[SENSOR_ROW_SIZE];
 
-    update_line_position(&line_position, pulse_lengths_us);
+    bool middle_detected = pulse_lengths_us[3] > SENSOR_BLACK_THRESHOLD_CALIBRATED || pulse_lengths_us[4] > SENSOR_BLACK_THRESHOLD_CALIBRATED;
+    bool left_turn_detected = (!middle_detected) && pulse_lengths_us[7] > SENSOR_BLACK_THRESHOLD_CALIBRATED;
+    bool right_turn_detected = (!middle_detected) && pulse_lengths_us[0] > SENSOR_BLACK_THRESHOLD_CALIBRATED;
+
+    extract_sensor_row(pulse_lengths_us, sensor_row);
+    update_line_position(&line_position, sensor_row);
 
     // 0 centered, 1.0 max left/right
     float error = line_position / ((SENSOR_ROW_SIZE - 1) * 512.f) - 1.f;
@@ -69,31 +89,20 @@ void control_loop_decide_motors(uint32_t *pulse_lengths_us, int32_t *left_speed_
 
     float output = turn_pid_update(error);
 
-    if (output > 0)
+    if (left_turn_detected || (off_line && output < 0))
     {
-        if (!off_line)
-        {
-            left_speed = forward_speed + output;
-            right_speed = forward_speed - output;
-        }
-        else
-        {
-            left_speed = 0.1f;
-            right_speed = -1.0f;
-        }
+        left_speed = forward_speed - sharp_turn_speed;
+        right_speed = forward_speed + sharp_turn_speed;
+    }
+    else if (right_turn_detected || (off_line && output > 0))
+    {
+        left_speed = forward_speed + sharp_turn_speed;
+        right_speed = forward_speed - sharp_turn_speed;
     }
     else
     {
-        if (!off_line)
-        {
-            left_speed = forward_speed + output;
-            right_speed = forward_speed - output;
-        }
-        else
-        {
-            left_speed = -1.0f;
-            right_speed = 0.1f;
-        }
+        left_speed = forward_speed + output;
+        right_speed = forward_speed - output;
     }
 
     *left_speed_out = CLAMP((int) (left_speed * MOTOR_MAX_SPEED), -MOTOR_MAX_SPEED, MOTOR_MAX_SPEED);

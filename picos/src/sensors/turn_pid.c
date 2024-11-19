@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 
 static float g_kp = 0.6f;
-static float g_kd = 0.008f;
+static float g_kd = 0.02f;
 
 static float g_last_error1 = 0.0f;
 static float g_last_error2 = 0.0f;
